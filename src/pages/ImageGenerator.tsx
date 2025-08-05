@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "@/utils/toast";
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast"; // Corrected import
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading state
 
@@ -15,7 +15,7 @@ const ImageGenerator = () => {
     if (!prompt.trim()) {
       setImageUrl(null);
       if (currentToastId) {
-        toast.dismissToast(currentToastId);
+        dismissToast(currentToastId); // Corrected usage
         setCurrentToastId(null);
       }
       setIsLoading(false);
@@ -27,9 +27,9 @@ const ImageGenerator = () => {
 
     // Dismiss any existing loading toast before showing a new one
     if (currentToastId) {
-      toast.dismissToast(currentToastId);
+      dismissToast(currentToastId); // Corrected usage
     }
-    const newToastId = toast.showLoading("Generating image...");
+    const newToastId = showLoading("Generating image..."); // Corrected usage
     setCurrentToastId(newToastId);
 
     const handler = setTimeout(async () => {
@@ -41,14 +41,14 @@ const ImageGenerator = () => {
         // For a real app, you'd send 'prompt' to your backend here.
         const generatedImage = `https://via.placeholder.com/512x512?text=${encodeURIComponent(prompt.substring(0, 20)) || "Generated+Image"}`;
         setImageUrl(generatedImage);
-        toast.showSuccess("Image generated successfully!");
+        showSuccess("Image generated successfully!"); // Corrected usage
       } catch (error) {
         console.error("Error generating image:", error);
-        toast.showError("Failed to generate image. Please try again.");
+        showError("Failed to generate image. Please try again."); // Corrected usage
       } finally {
         setIsLoading(false);
         if (currentToastId) {
-          toast.dismissToast(currentToastId);
+          dismissToast(currentToastId); // Corrected usage
           setCurrentToastId(null);
         }
       }
@@ -57,11 +57,11 @@ const ImageGenerator = () => {
     return () => {
       clearTimeout(handler);
       if (currentToastId) {
-        toast.dismissToast(currentToastId);
+        dismissToast(currentToastId); // Corrected usage
         setCurrentToastId(null);
       }
     };
-  }, [prompt]); // Re-run effect when prompt changes
+  }, [prompt, currentToastId]); // Added currentToastId to dependency array for proper cleanup
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
