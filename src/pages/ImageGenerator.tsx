@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast"; // Corrected import
+import { showSuccess, showError, showLoading, dismissToast } from "@/utils/toast";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading state
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ImageGenerator = () => {
   const [prompt, setPrompt] = useState<string>("");
@@ -15,7 +15,7 @@ const ImageGenerator = () => {
     if (!prompt.trim()) {
       setImageUrl(null);
       if (currentToastId) {
-        dismissToast(currentToastId); // Corrected usage
+        dismissToast(currentToastId);
         setCurrentToastId(null);
       }
       setIsLoading(false);
@@ -27,9 +27,9 @@ const ImageGenerator = () => {
 
     // Dismiss any existing loading toast before showing a new one
     if (currentToastId) {
-      dismissToast(currentToastId); // Corrected usage
+      dismissToast(currentToastId);
     }
-    const newToastId = showLoading("Generating image..."); // Corrected usage
+    const newToastId = showLoading("Generating image...");
     setCurrentToastId(newToastId);
 
     const handler = setTimeout(async () => {
@@ -41,14 +41,14 @@ const ImageGenerator = () => {
         // For a real app, you'd send 'prompt' to your backend here.
         const generatedImage = `https://via.placeholder.com/512x512?text=${encodeURIComponent(prompt.substring(0, 20)) || "Generated+Image"}`;
         setImageUrl(generatedImage);
-        showSuccess("Image generated successfully!"); // Corrected usage
+        showSuccess("Image generated successfully!");
       } catch (error) {
         console.error("Error generating image:", error);
-        showError("Failed to generate image. Please try again."); // Corrected usage
+        showError("Failed to generate image. Please try again.");
       } finally {
         setIsLoading(false);
         if (currentToastId) {
-          dismissToast(currentToastId); // Corrected usage
+          dismissToast(currentToastId);
           setCurrentToastId(null);
         }
       }
@@ -57,18 +57,18 @@ const ImageGenerator = () => {
     return () => {
       clearTimeout(handler);
       if (currentToastId) {
-        dismissToast(currentToastId); // Corrected usage
+        dismissToast(currentToastId);
         setCurrentToastId(null);
       }
     };
-  }, [prompt, currentToastId]); // Added currentToastId to dependency array for proper cleanup
+  }, [prompt, currentToastId]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-2xl shadow-lg rounded-lg">
         <CardHeader>
           <CardTitle className="text-3xl font-bold text-center text-gray-800 dark:text-gray-100">
-            AI Image Generator
+            Imagine everything!
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -78,7 +78,7 @@ const ImageGenerator = () => {
             </label>
             <Textarea
               id="prompt"
-              placeholder="e.g., A futuristic city at sunset, cyberpunk style, highly detailed"
+              placeholder="Imagine everything!"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={4}
