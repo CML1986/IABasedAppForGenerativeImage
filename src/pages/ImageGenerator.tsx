@@ -9,30 +9,34 @@ const ImageGenerator = () => {
   const [prompt, setPrompt] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [currentToastId, setCurrentToastId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!prompt.trim()) {
-      setImageUrl(null);
-      if (currentToastId) {
-        dismissToast(currentToastId);
-        setCurrentToastId(null);
+    let handler: ReturnType<typeof setTimeout>;
+    let activeToastId: string | null = null; // Local variable to hold the toast ID for this effect run
+
+    // Cleanup function for when the effect re-runs or component unmounts
+    const cleanup = () => {
+      clearTimeout(handler); // Always clear any pending timeout
+      if (activeToastId) {
+        dismissToast(activeToastId); // Dismiss the toast associated with this effect run
       }
+    };
+
+    if (!prompt.trim()) {
+      // If prompt is empty, stop loading, but keep the last image visible
       setIsLoading(false);
-      return;
+      // Do NOT set imageUrl to null here; it will retain its last value
+      return cleanup; // Return cleanup to clear any previous toast/timeout
     }
 
+    // If prompt is not empty, start the generation process
     setIsLoading(true);
-    setImageUrl(null); // Clear previous image when prompt changes
+    setImageUrl(null); // Clear previous image to show skeleton for new generation
 
-    // Dismiss any existing loading toast before showing a new one
-    if (currentToastId) {
-      dismissToast(currentToastId);
-    }
-    const newToastId = showLoading("Generating image...");
-    setCurrentToastId(newToastId);
+    // Show loading toast and store its ID
+    activeToastId = showLoading("Generating image...");
 
-    const handler = setTimeout(async () => {
+    handler = setTimeout(async () => {
       try {
         // Simulate API call delay
         await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -47,21 +51,15 @@ const ImageGenerator = () => {
         showError("Failed to generate image. Please try again.");
       } finally {
         setIsLoading(false);
-        if (currentToastId) {
-          dismissToast(currentToastId);
-          setCurrentToastId(null);
+        if (activeToastId) {
+          dismissToast(activeToastId); // Dismiss the toast when generation finishes
+          activeToastId = null; // Clear local reference
         }
       }
     }, 500); // Debounce delay: 500ms
 
-    return () => {
-      clearTimeout(handler);
-      if (currentToastId) {
-        dismissToast(currentToastId);
-        setCurrentToastId(null);
-      }
-    };
-  }, [prompt, currentToastId]);
+    return cleanup; // Return the cleanup function for this effect run
+  }, [prompt]); // Re-run effect only when prompt changes
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
@@ -89,7 +87,7 @@ const ImageGenerator = () => {
           <div className="mt-6 text-center">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Generated Image:</h2>
             <div className="relative w-full max-w-md mx-auto aspect-square rounded-lg overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-              {isLoading && prompt.trim() ? (
+              {isLoading && prompt.trim() ? ( // Only show skeleton if loading AND prompt is not empty
                 <Skeleton className="w-full h-full bg-gray-200 dark:bg-gray-700" />
               ) : imageUrl ? (
                 <img
