@@ -1,44 +1,67 @@
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/utils/toast";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+import { Skeleton } from "@/components/ui/skeleton"; // Import Skeleton for loading state
 
 const ImageGenerator = () => {
   const [prompt, setPrompt] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [currentToastId, setCurrentToastId] = useState<string | null>(null);
 
-  const handleGenerateImage = async () => {
+  useEffect(() => {
     if (!prompt.trim()) {
-      toast.error("Please enter a prompt to generate an image.");
+      setImageUrl(null);
+      if (currentToastId) {
+        toast.dismissToast(currentToastId);
+        setCurrentToastId(null);
+      }
+      setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    setImageUrl(null);
-    toast.showLoading("Generating image...");
+    setImageUrl(null); // Clear previous image when prompt changes
 
-    try {
-      // In a real application, you would make an API call to your backend here.
-      // The backend would then call an AI image generation service (e.g., DALL-E, Stable Diffusion).
-      // For now, we'll simulate a delay and show a placeholder image.
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Simulate API call delay
-
-      // Placeholder image URL - replace with actual generated image URL from your backend
-      const generatedImage = "https://via.placeholder.com/512x512?text=Generated+Image";
-      setImageUrl(generatedImage);
-      toast.dismissToast("generating-image"); // Dismiss loading toast
-      toast.showSuccess("Image generated successfully!");
-    } catch (error) {
-      console.error("Error generating image:", error);
-      toast.dismissToast("generating-image"); // Dismiss loading toast
-      toast.showError("Failed to generate image. Please try again.");
-    } finally {
-      setIsLoading(false);
+    // Dismiss any existing loading toast before showing a new one
+    if (currentToastId) {
+      toast.dismissToast(currentToastId);
     }
-  };
+    const newToastId = toast.showLoading("Generating image...");
+    setCurrentToastId(newToastId);
+
+    const handler = setTimeout(async () => {
+      try {
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+
+        // Placeholder image URL - replace with actual generated image URL from your backend
+        // For a real app, you'd send 'prompt' to your backend here.
+        const generatedImage = `https://via.placeholder.com/512x512?text=${encodeURIComponent(prompt.substring(0, 20)) || "Generated+Image"}`;
+        setImageUrl(generatedImage);
+        toast.showSuccess("Image generated successfully!");
+      } catch (error) {
+        console.error("Error generating image:", error);
+        toast.showError("Failed to generate image. Please try again.");
+      } finally {
+        setIsLoading(false);
+        if (currentToastId) {
+          toast.dismissToast(currentToastId);
+          setCurrentToastId(null);
+        }
+      }
+    }, 500); // Debounce delay: 500ms
+
+    return () => {
+      clearTimeout(handler);
+      if (currentToastId) {
+        toast.dismissToast(currentToastId);
+        setCurrentToastId(null);
+      }
+    };
+  }, [prompt]); // Re-run effect when prompt changes
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
@@ -62,26 +85,23 @@ const ImageGenerator = () => {
               className="w-full resize-none border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
-          <Button
-            onClick={handleGenerateImage}
-            disabled={isLoading}
-            className="w-full py-3 text-lg font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors duration-200"
-          >
-            {isLoading ? "Generating..." : "Generate Image"}
-          </Button>
 
-          {imageUrl && (
-            <div className="mt-6 text-center">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Generated Image:</h2>
-              <div className="relative w-full max-w-md mx-auto aspect-square rounded-lg overflow-hidden shadow-md border border-gray-200 dark:border-gray-700">
+          <div className="mt-6 text-center">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Generated Image:</h2>
+            <div className="relative w-full max-w-md mx-auto aspect-square rounded-lg overflow-hidden shadow-md border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+              {isLoading && prompt.trim() ? (
+                <Skeleton className="w-full h-full bg-gray-200 dark:bg-gray-700" />
+              ) : imageUrl ? (
                 <img
                   src={imageUrl}
                   alt="Generated AI Image"
                   className="w-full h-full object-cover"
                 />
-              </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">Type a prompt to generate an image.</p>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
       <MadeWithDyad />
